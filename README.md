@@ -1,5 +1,5 @@
 # megParser
-A quick script to help parse [Tomnomnom's meg tool](https://github.com/tomnomnom/meg).
+A quick script to help parse [tomnomnom's meg tool](https://github.com/tomnomnom/meg).
 
 You can parse by status code and set a threshold to help exclude false positives.
 ## Help Page
