@@ -18,6 +18,7 @@ options:
 -o              specify the file to output results to (default is standard out)
 -k              specify a keyword to search in HTML response to include in output
 -e              specify a keyword to search in HTML response to not include in output (opposite of -k)
+-l				show content length of response (cannot be used with -k or -e flag yet)
 
 Example:
 ./megParser.sh -c 302 -t 10 -o myoutput.txt meg_directory
