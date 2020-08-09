@@ -1,9 +1,12 @@
+#!/bin/bash
+contentlength=""
 code="200"
 threshold="5"
 output_file="/dev/stdout"
 meg_directory="out"
 keyword=""
 exclude=""
+anomaly=""
 while test $# -gt 0; do
 	case "$1" in
 		-h|--help)
@@ -21,6 +24,7 @@ while test $# -gt 0; do
 			echo "-o		specify the file to output results to (default is standard out)"
 			echo "-k		specify a keyword to search in HTML response to include in output"
 			echo "-e		specify a keyword to search in HTML response to not include in output (opposite of -k)"
+			echo "-l		show content length of response (cannot be used with -k or -e flag yet)"
 			echo " "
 			echo "Example:"
 			echo "./megParser.sh -c 302 -t 10 -o myoutput.txt meg_directory"
@@ -77,6 +81,20 @@ while test $# -gt 0; do
 			fi
 			shift
 			;;
+		-a)
+			shift
+			if test $# -gt 0; then
+				anomaly="$1"
+			else
+				echo "Error, no anomaly type specified. See help page (-h)"
+				exit 1	
+			fi
+			shift
+			;;
+		-l)
+			contentlength="true"
+			shift
+			;;
 		*)
 			meg_directory="$1"
 			break
@@ -85,11 +103,22 @@ while test $# -gt 0; do
 done
 
 while read p; do 
-
+	if [[ ! -z "$anomaly" ]]; then
+		if [[ "$anomaly" -eq "intersection" ]]; then
+			echo "intersection"
+		elif [[ "$anomaly" -eq "union" ]]; then
+			echo "union"
+		else 
+			echo "Error, incorrect anomaly type specified. See help page (-h)"
+			exit 1
+		fi
+	fi
 	if [[ ! -z "$keyword" ]]; then
 		grep -r -Hno -i "$keyword" "$meg_directory"/"$p" | awk -F':' '{if ($2 != '1') {print $1}}' | xargs -I{} grep -l -i "HTTP.*$code" {} | xargs -I{} head -n 1 {} | sort -u
 	elif [[ ! -z "$exclude" ]]; then
 		grep -r -L -i "$exclude" "$meg_directory"/"$p" |  xargs -I{} grep -l -i "HTTP.*$code" {} | xargs -I{} head -n 1 {} | sort -u
+	elif [[ ! -z "$contentlength" ]]; then
+			grep -r -l -i "HTTP.*$code" "$meg_directory"/"$p" | xargs -I{} awk 'NR == 1 {f=$0}; {if ($0 ~ /Content-Length/) {print f,"(" $2,$3 ")"} else if ($0 == f) {print f}}' {} | tac | awk '!a[$1]++' | tac 
 	else
 		grep -i "($code" "$meg_directory"/index | grep "$p" | cut -d" " -f2
 	fi
